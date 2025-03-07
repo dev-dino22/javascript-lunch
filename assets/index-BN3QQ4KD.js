@@ -201,7 +201,8 @@ class TextArea extends Component {
       },
       classList: [],
       styles: {},
-      id: "init"
+      id: "init",
+      isRequired: false
     };
   }
   setEvent() {
@@ -215,11 +216,12 @@ class TextArea extends Component {
     document.addEventListener("input", this.handleInput);
   }
   template() {
-    const { rows, maxLength, placeHolder, classList, styles, id } = this.props;
+    const { isRequired, rows, maxLength, placeHolder, classList, styles, id } = this.props;
     return `
       <textarea 
+        ${isRequired && "required"}
         autofocus
-        id="${id}"  
+        id="${id}"
         name="${id}"
         rows="${rows}"
         maxlength="${maxLength}"
@@ -351,7 +353,8 @@ class LunchForm extends Component {
       placeHolder: "피양콩할마니",
       onInput: (value) => this.setState({ storeName: value }),
       classList: ["h-44", "rounded-lg", "resize-none"],
-      id: "store-name-textarea"
+      id: "store-name-textarea",
+      isRequired: true
     });
     return `
       <div class="w-full flex flex-col">
@@ -385,6 +388,7 @@ class LunchForm extends Component {
     const descriptionLabel = this.addChild(Text);
     descriptionLabel.setProps({
       content: "설명",
+      required: false,
       classList: ["text-lg", "slate-500"],
       id: "description-label"
     });
@@ -392,6 +396,7 @@ class LunchForm extends Component {
     description.setProps({
       rows: 3,
       maxLength: 255,
+      isRequired: false,
       placeHolder: "설명을 입력해주세요. 설명은 최대 255글자까지 가능합니다.",
       onInput: (value) => this.setState({ description: value }),
       classList: ["h-90", "rounded-lg", "resize-none"],
@@ -415,6 +420,7 @@ class LunchForm extends Component {
     reference.setProps({
       rows: 1,
       maxLength: 100,
+      isRequired: false,
       placeHolder: "https://techcourse.woowahan.com/",
       onInput: (value) => this.setState({ reference: value }),
       classList: ["h-44", "rounded-lg", "resize-none"],
