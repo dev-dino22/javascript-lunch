@@ -2,14 +2,34 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/javascript-lunch/assets/favicon-N6t8okN-.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>점심 뭐 먹지</title>
-    <script type="module" crossorigin src="/javascript-lunch/assets/index-BN3QQ4KD.js"></script>
-    <link rel="stylesheet" crossorigin href="/javascript-lunch/assets/index-DfieicYF.css">
+    <script type="module" crossorigin src="/javascript-lunch/assets/index-DHQ0_3Un.js"></script>
+    <link rel="stylesheet" crossorigin href="/javascript-lunch/assets/index-qWavFN0W.css">
   </head>
   <body>
-    <div id="app" class="flex justify-center items-center"></div>
-    <div id="bottom-sheet"></div>
+    <div id="app">
+          <!-- GNB -->
+      <div class="container">
+        <div class="layout">
+
+          <header class="gnb">
+            <h1 id="title-logo" class="gnb__title text-title" data-action="reload">점심 뭐 먹지</h1>
+            <button type="button" class="gnb__button" aria-label="음식점 추가" id="openStoreModalBtn" data-action="showStoreAddModal">
+              <img src="./images/add-button.png" alt="음식점 추가">
+            </button>
+          </header>
+          <main>
+              <!-- 음식점 목록 -->
+              <section id="restaurantListSection" class="restaurant-list-container"></section>
+              </section>
+            </main>
+          
+          </div>
+      </div>
+          <div id="modalBackground" data-action="removeModal">
+        </div>
+    </div>
   </body>
 </html>
