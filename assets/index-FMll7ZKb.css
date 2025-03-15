@@ -1,3 +1,106 @@
+html,
+body,
+div,
+span,
+applet,
+object,
+iframe,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+blockquote,
+pre,
+a,
+abbr,
+acronym,
+address,
+big,
+cite,
+code,
+del,
+dfn,
+em,
+img,
+ins,
+kbd,
+q,
+s,
+samp,
+small,
+strike,
+strong,
+sub,
+sup,
+tt,
+var,
+b,
+u,
+i,
+center,
+dl,
+dt,
+dd,
+ol,
+ul,
+li,
+fieldset,
+form,
+label,
+legend,
+table,
+caption,
+tbody,
+tfoot,
+thead,
+tr,
+th,
+td,
+article,
+aside,
+canvas,
+details,
+embed,
+figure,
+figcaption,
+footer,
+header,
+hgroup,
+menu,
+nav,
+output,
+ruby,
+section,
+summary,
+time,
+mark,
+audio,
+video,
+hr {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+* {
+  font-family: "Pretendard";
+}
+
+textarea:focus {
+  outline: none;
+}
+
+button {
+  all: unset;
+  display: inline-block;
+  cursor: pointer;
+  text-align: center;
+  border: none;
+  background-color: transparent;
+}
 * {
   padding: 0;
   margin: 0;
@@ -19,23 +122,126 @@ body {
   font-size: 16px;
 }
 
+.star-button svg path {
+  fill-opacity: 0.5;
+}
+
+.star-button.active svg path {
+  fill-opacity: 1;
+}
+
 .container {
   display: flex;
   width: 100%;
   flex-direction: column;
   align-items: center;
+  background-image: url("/javascript-lunch/assets/background-image-D0RiT9uP.jpg");
+  background-size: cover;
 }
 
 .layout {
+  position: relative;
   width: 390px;
   display: flex;
   flex-direction: column;
-  //border: 1px solid rgb(223, 223, 223);
+  background-color: white;
+  border-radius: 40px;
+  outline: 10px solid rgb(34, 34, 34);
+  margin: 20px 0;
+  height: calc(100vh - 40px);
+  overflow: hidden;
+}
+
+.modal-layout {
+  position: relative;
+  width: 390px;
+  display: flex;
+  flex-direction: column;
+  border-radius: 40px;
+  margin: 20px 0;
+  height: calc(100vh - 40px);
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.camera-shape {
+  position: absolute;
+  width: 30%;
+  height: 28px;
+  background-color: #000;
+  top: 14px;
+  left: 142px;
+  border-radius: 60px;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  //padding: 0 16px;
+  margin: 16px 0;
+  overflow: hidden;
+}
+
+.restaurant-menu-container {
+  padding: 0 16px;
+}
+
+.tab-container {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+}
+
+.tab-menu {
+  display: flex;
+  position: relative;
+  height: 40px;
+  border-bottom: 2px solid var(--grey-200);
+}
+
+.tab-menu-box {
+  display: flex;
+  flex-direction: rows;
+}
+
+.tab-item {
+  border: none;
+  background-color: transparent;
+  flex: 1;
+  text-align: center;
+  font-size: 16px;
+  cursor: pointer;
+  color: #777;
+  transition: color 0.3s ease;
+}
+
+.tab-item.active {
+  color: #d9534f;
+  font-weight: bold;
+}
+
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  width: 50%; /* 기본적으로 첫 번째 탭의 크기만큼 설정 */
+  background-color: #d9534f;
+  transition: left 0.3s ease, width 0.3s ease;
+}
+
+.tab-indicator-thumb {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background-color: var(--primary-color);
+  transition: left 0.3s ease, width 0.3s ease;
 }
 
 main {
   height: calc(100vh - 64px);
-  overflow-y: scroll;
 }
 
 main::-webkit-scrollbar {
@@ -84,6 +290,17 @@ main::-webkit-scrollbar-thumb:hover {
   font-weight: 400;
 }
 
+.text-menu {
+  font-size: 16px;
+  line-height: 24px;
+  font-weight: 600;
+  color: var(--grey-300);
+}
+
+.text-menu:active {
+  color: var(--primary-color);
+}
+
 .text-caption {
   font-size: 14px;
   line-height: 20px;
@@ -91,6 +308,13 @@ main::-webkit-scrollbar-thumb:hover {
 }
 
 /* GNB ********************************************/
+
+.safe-zone-top {
+  height: 30px;
+  border-radius: 20px 20px 0 0;
+  background-color: var(--primary-color);
+}
+
 .gnb {
   top: 0;
   display: flex;
@@ -125,6 +349,18 @@ main::-webkit-scrollbar-thumb:hover {
 
 /* 음식점 목록 *****************************************/
 
+.restaurant-section-slider {
+  overflow-x: hidden;
+  position: relative;
+}
+
+.restaurant-section-container {
+  display: flex;
+  flex-direction: row;
+  width: 780px;
+  display: flex;
+}
+
 /* 카테고리/정렬 필터 */
 .restaurant-filter-container {
   display: flex;
@@ -152,9 +388,7 @@ main::-webkit-scrollbar-thumb:hover {
 .restaurant-list-container {
   display: flex;
   flex-direction: column;
-
   padding: 0 16px;
-  margin: 16px 0;
 }
 
 .restaurant {
@@ -186,10 +420,34 @@ main::-webkit-scrollbar-thumb:hover {
   height: 36px;
 }
 
+.restaurant__title-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.restaurant__title {
+  display: flex;
+  flex-direction: column;
+}
+
 .restaurant__info {
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+  width: 100%;
+}
+
+.restaurant__info.full .restaurant__description {
+  display: -webkit-box;
+
+  padding-top: 8px;
+
+  overflow: visible; /* 숨김 해제 */
+  text-overflow: unset; /* 말줄임 해제 */
+  -webkit-line-clamp: unset; /* 줄 제한 해제 */
+  -webkit-box-orient: unset; /* 방향 설정 해제 */
+  white-space: normal; /* 줄바꿈 허용 */
 }
 
 .restaurant__name {

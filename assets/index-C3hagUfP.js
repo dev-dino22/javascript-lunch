@@ -35,6 +35,31 @@
     fetch(link.href, fetchOpts);
   }
 })();
+function storageController(storage) {
+  function getStorage2(key) {
+    const item = storage.getItem(key);
+    if (item) {
+      return JSON.parse(item);
+    }
+    return null;
+  }
+  function setStorage2(key, value) {
+    storage.setItem(key, JSON.stringify(value));
+  }
+  function removeStorage2(key) {
+    storage.removeItem(key);
+  }
+  function clearStorage() {
+    storage.clear();
+  }
+  return {
+    getStorage: getStorage2,
+    setStorage: setStorage2,
+    removeStorage: removeStorage2,
+    clearStorage
+  };
+}
+const { getStorage, setStorage } = storageController(localStorage);
 const getHTML$1 = (id) => document.getElementById(id);
 const createElement = (tag) => document.createElement(tag);
 function CategoryIcon(category) {
@@ -47,12 +72,30 @@ function CategoryIcon(category) {
   }
   return template();
 }
-function StoreInfo({ name, distance, description, link, type }) {
+function StarButton(isSelected) {
+  return `
+        <div>
+            <button type="button">
+                <svg width="28" height="26" viewBox="0 0 28 26" fill=${isSelected === true ? "#EC4A0A" : "none"} xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 21.0267L22.24 26L20.0534 16.6267L27.3334 10.32L17.7467 9.50666L14 0.666656L10.2534 9.50666L0.666687 10.32L7.94669 16.6267L5.76002 26L14 21.0267Z" fill="none"/>
+                    <path d="M14.5168 20.1705L14 19.8586L13.4833 20.1705L7.27228 23.9192L8.92054 16.8538L9.05766 16.266L8.60146 15.8708L3.11285 11.116L10.3379 10.5031L10.9388 10.4521L11.1741 9.89688L14 3.22925L16.826 9.89688L17.0613 10.4521L17.6621 10.5031L24.8872 11.116L19.3986 15.8708L18.9424 16.266L19.0795 16.8538L20.7278 23.9192L14.5168 20.1705Z" stroke="#EC4A0A" stroke-opacity="0.5" stroke-width="2"/>
+                </svg>
+            </button>
+        </div>
+    `;
+}
+function StoreInfo({ name, distance, description, link, isFavorite }, type = "summary") {
   function template() {
     return `
-            ${`<div class="restaurant__info">`}
+            ${type === "summary" ? `<div class="restaurant__info">` : `<div class="restaurant__info full">`}
+            <div class="restaurant__title-box">
+              <div class="restaurant__title">
                 <h3 class="restaurant__name text-subtitle">${name}</h3>
                 <span class="restaurant__distance text-body">캠퍼스부터 ${distance}분 내</span>
+              </div>
+              ${StarButton(isFavorite)}
+            </div>
+               
                 <p class="restaurant__description text-body">${description || "-"}</p>
                 ${link ? `<a href="${link}" target="_blank" class="restaurant__link">${link}</a>` : ""}
             </div>
@@ -60,16 +103,11 @@ function StoreInfo({ name, distance, description, link, type }) {
   }
   return template();
 }
-function LunchItem({
-  targetID,
-  category,
-  name,
-  distance,
-  description,
-  link
-}) {
+function LunchItem({ category, name, distance, description, link, isFavorite }, index) {
   const li = createElement("li");
   li.classList.add("restaurant");
+  li.setAttribute("data-action", "showStoreDeleteModal");
+  li.setAttribute("data-index", index);
   function render() {
     li.innerHTML = `
     ${CategoryIcon(category)}
@@ -78,34 +116,22 @@ function LunchItem({
       distance,
       description,
       link,
-      type: "summary"
+      isFavorite
     })}
   `;
     return li;
   }
   return render();
 }
-function LunchList(targetID) {
-  const lunchItems = [
-    LunchItem({
-      category: "etc",
-      name: "도스타코스 선릉점",
-      distance: 5,
-      description: "멕시칸 캐주얼 그릴"
-    }),
-    LunchItem({
-      category: "japanese",
-      name: "잇쇼우",
-      distance: 10,
-      description: "잇쇼우는 정통 자가제면 사누끼 우동이 대표메뉴입니다. 기술은 정성을 이길 수 없다는 신념으로 모든 음식에 최선을 다하는 잇쇼우는 고객 한분 한분께 최선을 다하겠습니다"
-    })
-  ];
-  const ul = createElement("ul");
-  ul.classList.add("restaurant-list");
+function LunchList(targetID = "restaurantListSection") {
+  const lunchItems = getStorage("lunchItems");
+  console.log("lunchItems )))", getStorage("lunchItems"));
   function template() {
+    const ul = createElement("ul");
+    ul.classList.add("restaurant-list");
     if (lunchItems.length > 0) {
-      lunchItems.forEach((item) => {
-        ul.appendChild(item);
+      lunchItems.forEach((item, index) => {
+        ul.appendChild(LunchItem(item, String(index)));
       });
     } else {
       ul.innerHTML = `<p class="empty-message">목록이 없습니다.</p>`;
@@ -113,13 +139,27 @@ function LunchList(targetID) {
     return ul.outerHTML;
   }
   function render() {
+    console.log("실행됨실행됨");
     getHTML$1(targetID).innerHTML = "";
     getHTML$1(targetID).innerHTML = template();
   }
-  function addRestaurantItem({ category, name, distance, description, link }) {
-    const newItem = LunchItem({ category, name, distance, description, link });
+  function addRestaurantItem({
+    category,
+    name,
+    distance,
+    description,
+    link
+  }) {
+    const newItem = {
+      category,
+      name,
+      distance,
+      description,
+      link,
+      isFavorite: false
+    };
     lunchItems.push(newItem);
-    ul.appendChild(newItem);
+    setStorage("lunchItems", lunchItems);
     render();
   }
   return {
@@ -127,6 +167,31 @@ function LunchList(targetID) {
     addRestaurantItem,
     template
   };
+}
+function TabMenu() {
+  return `
+<div class="tab-container">
+  <div class="tab-menu">
+    <!-- <div class="tab-menu-box"> -->
+        <button type="button" value="0" class="tab-item active" data-action="selectTab">모든 음식점</button>
+        <button type="button" value="1" class="tab-item" data-action="selectTab">자주 가는 음식점</button>
+    </div>
+    <div class="tab-indicator">
+        <div class="tab-indicator-thumb"></div>
+    <!-- </div> -->
+  </div>
+</div>
+
+    `;
+}
+function RestaurantTabMenu(targetID) {
+  function render() {
+    getHTML$1(targetID).innerHTML = "";
+    getHTML$1(targetID).innerHTML = `
+            ${TabMenu()}
+        `;
+  }
+  return render();
 }
 const getHTML = (id) => document.getElementById(id);
 function SubmitEvent(lunchList2) {
@@ -148,6 +213,15 @@ function SubmitEvent(lunchList2) {
     });
     closeModal();
   }
+  function deleteStore(event, form) {
+    var _a;
+    const lunchItemIndex = (_a = event.submitter) == null ? void 0 : _a.value;
+    const storageLunchItems = getStorage("lunchItems");
+    storageLunchItems.splice(lunchItemIndex, 1);
+    setStorage("lunchItems", storageLunchItems);
+    LunchList().render();
+    closeModal();
+  }
   function closeModal() {
     const modalBackground = getHTML("modalBackground");
     modalBackground.classList.remove("show");
@@ -159,18 +233,26 @@ function SubmitEvent(lunchList2) {
     if (form.id === "restaurantForm") {
       handleRestaurantSubmit(event, form);
     }
+    if (form.id === "storeDeleteForm") {
+      deleteStore(event);
+    }
     form.reset();
   }
 }
+RestaurantTabMenu("restaurantMenuSection");
 const lunchList = LunchList("restaurantListSection");
 lunchList.render();
 SubmitEvent(lunchList);
-function Button({ id, type, content, dataSet, styleType }) {
+const lunchFavoriteList = LunchList("restaurantFavoriteSection");
+lunchFavoriteList.render();
+function Button({ id, type, content, dataSet, styleType, buttonValue }) {
   const classList = styleType === "primary" ? "button button--primary text-caption" : "button button--secondary text-caption";
   function template() {
     return `
         <button 
-          ${id ? `id="${id}"` : ""} 
+          ${buttonValue ? `value="${buttonValue}"` : ""} 
+          ${id ? `id="${id}"` : ""}
+          ${id ? `name="${id}"` : ""}
           type="${type}" 
           class="${classList}"
           ${dataSet ? `data-action="${dataSet}"` : ""}
@@ -181,14 +263,39 @@ function Button({ id, type, content, dataSet, styleType }) {
   }
   return template();
 }
-function FormButtons({ formName }) {
-  const storeAddBtns = `${Button({ id: "closeModalBtn", type: "button", content: "취소하기", dataSet: "removeModal" })}
-                ${Button({ type: "submit", content: "추가하기", styleType: "primary" })}`;
+function FormButtons(formName, buttonValue) {
+  const storeAddBtns = `${Button({
+    id: "closeModalBtn",
+    type: "button",
+    content: "취소하기",
+    dataSet: "removeModal"
+  })}
+
+  ${Button({
+    type: "submit",
+    content: "추가하기",
+    styleType: "primary"
+  })}`;
+  const storeDeleteBtns = `${Button({
+    id: "storeDeleteBtn",
+    type: "submit",
+    content: "삭제하기",
+    dataSet: "deleteStore",
+    buttonValue
+  })}
+
+  ${Button({
+    type: "button",
+    id: "closeModalBtn",
+    content: "닫기",
+    styleType: "primary",
+    dataSet: "removeModal"
+  })}`;
   function template() {
     return `
     <div id="buttonContainer" class="button-container" >
-        ${storeAddBtns || ""}
-        ${""}
+        ${formName === "storeAdd" && storeAddBtns || ""}
+        ${formName === "storeDelete" && storeDeleteBtns || ""}
     </div>
       `;
   }
@@ -272,21 +379,19 @@ function TextareaBox({
   }
   return template();
 }
-function FormBox({ id, formName, label }) {
+function StoreAddForm({ id, label }) {
   function template() {
     return `
         ${`<h2 class="modal-title text-title">새로운 음식점</h2>`}
         <form id="${id}" class="modal-form">
-          ${storeAddTemplate || ""}
-          ${""}
-          ${FormButtons({ formName })}
+          ${storeAddTemplate}
+          ${FormButtons("storeAdd")}
         </form>
     `;
   }
   return template();
 }
 const storeAddTemplate = `
-      <!-- 카테고리 -->
         ${SelectBox({
   id: "category",
   name: "category",
@@ -295,7 +400,6 @@ const storeAddTemplate = `
   required: true
 })}
 
-        <!-- 음식점 이름 -->
         ${InputBox({
   name: "name",
   id: "name",
@@ -306,7 +410,6 @@ const storeAddTemplate = `
   type: "text"
 })}
 
-        <!-- 거리 -->
         ${SelectBox({
   id: "distance",
   name: "distance",
@@ -315,7 +418,6 @@ const storeAddTemplate = `
   required: true
 })}
 
-        <!-- 설명 -->
         ${TextareaBox({
   id: "description",
   name: "description",
@@ -326,7 +428,6 @@ const storeAddTemplate = `
   helpCaption: "메뉴 등 추가 정보를 입력해 주세요."
 })}
 
-        <!-- 링크 -->
         ${InputBox({
   name: "link",
   id: "link",
@@ -338,14 +439,31 @@ const storeAddTemplate = `
   helpCaption: "매장 정보를 확인할 수 있는 링크를 입력해 주세요."
 })}
 `;
-function openModal(formName) {
+function StoreDeleteForm(lunchItemIndex) {
+  const lunchItem = getStorage("lunchItems")[lunchItemIndex];
+  function template() {
+    return `
+        <form id="storeDeleteForm" class="modal-form">
+          ${StoreInfo(lunchItem, "full")}
+          ${FormButtons("storeDelete", lunchItemIndex)}
+        </form>
+    `;
+  }
+  return template();
+}
+function openModal(formName, target) {
   const modalHTML = `<div class="modal modal--open">
     <div class="modal-container">
-      ${FormBox({ id: "restaurantForm", formName, label: "새로운 음식점" })}
+      ${formName === "storeAdd" && StoreAddForm({
+    id: "restaurantForm",
+    label: "새로운 음식점"
+  }) || ""}
+
+      ${formName === "storeDelete" && StoreDeleteForm(Number(target.dataset.index)) || ""}
     </div>
   </div>`;
-  getHTML$1("modalBackground").innerHTML = "";
-  getHTML$1("modalBackground").innerHTML = modalHTML;
+  getHTML$1("modalLayout").innerHTML = "";
+  getHTML$1("modalLayout").innerHTML = modalHTML;
   getHTML$1("modalBackground").classList.add("show");
 }
 class ClickEvent {
@@ -355,23 +473,44 @@ class ClickEvent {
   reload() {
     location.reload();
   }
+  selectTab(target) {
+    const tabs = document.querySelectorAll(".tab-item");
+    const indicator = document.querySelector(".tab-indicator");
+    const container = document.querySelector(".restaurant-section-container");
+    const slider = document.querySelector(".restaurant-section-slider");
+    const index = Number(target.value);
+    tabs.forEach((tab) => {
+      tab.classList.remove("active");
+    });
+    target.classList.add("active");
+    indicator.style.left = `${target.offsetLeft}px`;
+    indicator.style.width = `${target.offsetWidth}px`;
+    slider.scrollTo({
+      left: index * container.clientWidth,
+      behavior: "smooth"
+    });
+  }
   showStoreAddModal() {
     openModal("storeAdd");
   }
+  showStoreDeleteModal(target) {
+    openModal("storeDelete", target);
+  }
+  // deleteStore(target) {
+  //   const storageLunchItem = getStorage("lunchItems");
+  //   // console.log("target => ", target);
+  //   // console.log("타겟의 엘리먼트 li 확인", target.closest("li"));
+  //   // const lunchItemIndex = Number(target.closest("li").dataset.value);
+  //   storageLunchItem.splice(lunchItemIndex, 1);
+  //   setStorage("lunchItems", storageLunchItem);
+  //   document.getElementById("modalBackground")?.classList.remove("show");
+  // }
   removeModal(element) {
     var _a;
     if (element.id === "closeModalBtn") {
       (_a = document.getElementById("modalBackground")) == null ? void 0 : _a.classList.remove("show");
       return;
     }
-  }
-  copyContent(element) {
-    const textCopy = element.querySelector("p").textContent;
-    if (!textCopy) {
-      alert("복사할 내용이 없습니다.");
-      return;
-    }
-    navigator.clipboard.writeText(textCopy).then(() => alert("해당 로또 번호가 복사되었습니다.")).catch(() => alert("로또 번호 복사에 실패하였습니다."));
   }
   onClick(event) {
     let target = event.target.closest("[data-action]");

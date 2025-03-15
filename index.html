@@ -5,15 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <title>점심 뭐 먹지</title>
-    <script type="module" crossorigin src="/javascript-lunch/assets/index-C7jBqZYg.js"></script>
-    <link rel="stylesheet" crossorigin href="/javascript-lunch/assets/index-qWavFN0W.css">
+    <script type="module" crossorigin src="/javascript-lunch/assets/index-C3hagUfP.js"></script>
+    <link rel="stylesheet" crossorigin href="/javascript-lunch/assets/index-FMll7ZKb.css">
   </head>
   <body>
     <div id="app">
           <!-- GNB -->
       <div class="container">
         <div class="layout">
-
+          <div class="safe-zone-top"></div>
+          <div class="camera-shape"></div>
           <header class="gnb">
             <h1 id="title-logo" class="gnb__title text-title" data-action="reload">점심 뭐 먹지</h1>
             <button type="button" class="gnb__button" aria-label="음식점 추가" id="openStoreModalBtn" data-action="showStoreAddModal">
@@ -22,14 +23,22 @@
           </header>
           <main>
               <!-- 음식점 목록 -->
-              <section id="restaurantListSection" class="restaurant-list-container"></section>
-              </section>
-            </main>
+              <section id="restaurantMenuSection" class="restaurant-menu-container"></section>
+              <div class="restaurant-section-slider">
+                <div class="restaurant-section-container">
+                  <section id="restaurantListSection" class="restaurant-list-container"></section>
+                  <section id="restaurantFavoriteSection" class="restaurant-list-container"></section>
+                </div>
+              </div>
+            
+              
+          </main>
           
           </div>
       </div>
           <div id="modalBackground" data-action="removeModal">
-        </div>
+            <div id="modalLayout" class="modal-layout"></div>
+          </div>
     </div>
   </body>
 </html>
