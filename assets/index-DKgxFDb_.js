@@ -107,7 +107,10 @@ function updateFilterState(newState) {
 }
 function sortFilter(items) {
   if (!Array.isArray(items)) return items;
-  let filtered = [...items];
+  let filtered = items.map((item, index) => ({
+    ...item,
+    dataIndex: index
+  }));
   if (filterState.category) {
     filtered = filtered.filter(
       (item) => item.category === filterState.category
@@ -229,13 +232,13 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
     updateFilterState(newState);
     render();
   }
-  function template(items, indexMap) {
+  function template(items) {
     const ul = createElement("ul");
     ul.classList.add("restaurant-list");
     if (items.length > 0) {
-      items.forEach((item, index) => {
-        const originalIndex = indexMap ? indexMap[index] : index;
-        ul.appendChild(LunchItem(item, String(originalIndex)));
+      items.forEach((item) => {
+        const dataIndex = item.dataIndex ?? 0;
+        ul.appendChild(LunchItem(item, String(dataIndex)));
       });
     } else {
       ul.innerHTML = `
@@ -283,13 +286,12 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
     getHTML$1(lunchListID).innerHTML = ul.outerHTML;
   }
   function renderFavorites() {
-    const favorites = lunchItems.map((item, index) => ({ ...item, originalIndex: index })).filter((item) => item.isFavorite);
+    const favorites = lunchItems.map((item, index) => ({ ...item, dataIndex: index })).filter((item) => item.isFavorite);
     const items = favorites.map((item) => {
-      const { originalIndex, ...rest } = item;
+      const { dataIndex, ...rest } = item;
       return rest;
     });
-    const indexMap = favorites.map((item) => item.originalIndex);
-    const ul = template(items, indexMap);
+    const ul = template(items);
     getHTML$1(favoriteTargetID).innerHTML = "";
     getHTML$1(favoriteTargetID).appendChild(ul);
   }
@@ -656,8 +658,10 @@ class ClickEvent {
     if (!indexElement) return;
     const index = indexElement.getAttribute("data-index");
     if (!index) return;
+    console.log("index=>", index);
     indexElement.getAttribute("data-favorite") === "true";
     const storageLunchItems = getStorage("lunchItems");
+    console.log("storageLunchItems => ", storageLunchItems);
     storageLunchItems[index].isFavorite = !storageLunchItems[index].isFavorite;
     setStorage("lunchItems", storageLunchItems);
     LunchList().render();
