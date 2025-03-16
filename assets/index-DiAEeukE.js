@@ -106,6 +106,7 @@ function updateFilterState(newState) {
   };
 }
 function sortFilter(items) {
+  if (!Array.isArray(items)) return items;
   let filtered = [...items];
   if (filterState.category) {
     filtered = filtered.filter(
