@@ -35,6 +35,64 @@
     fetch(link.href, fetchOpts);
   }
 })();
+const SELECT_OPTIONS = {
+  distance: [
+    { value: "", label: "선택해 주세요" },
+    { value: "5", label: "5분 내" },
+    { value: "10", label: "10분 내" },
+    { value: "15", label: "15분 내" },
+    { value: "20", label: "20분 내" },
+    { value: "30", label: "30분 내" }
+  ],
+  category: [
+    { value: "", label: "선택해 주세요" },
+    { value: "korean", label: "한식" },
+    { value: "chinese", label: "중식" },
+    { value: "japanese", label: "일식" },
+    { value: "western", label: "양식" },
+    { value: "asian", label: "아시안" },
+    { value: "etc", label: "기타" }
+  ],
+  sortOption: [
+    { value: "name", label: "이름순" },
+    { value: "distance", label: "거리순" }
+  ]
+};
+SELECT_OPTIONS.sortCategory = SELECT_OPTIONS.category.map(
+  (option, index) => index === 0 ? { ...option, label: "전체" } : option
+);
+function SelectBox({ id, name, label, optionName, required }) {
+  const options = SELECT_OPTIONS[optionName] || [];
+  function template() {
+    return `
+      <div class="form-item ${required ? "form-item--required" : ""}">
+        ${label ? `<label for="${id}" class="text-caption">${label}</label>` : ""}
+        <select name="${name}" id="${id}" ${required ? "required" : ""}>
+          ${options.map(
+      (option) => `
+                <option value="${option.value}">${option.label}</option>
+              `
+    ).join("")}
+        </select>
+      </div>
+    `;
+  }
+  return template();
+}
+function FilterBox() {
+  return `
+        ${SelectBox({
+    id: "cartegoryFilter",
+    name: "cartegoryFilter",
+    optionName: "sortCategory"
+  })}
+        ${SelectBox({
+    id: "sortFilter",
+    name: "sortFilter",
+    optionName: "sortOption"
+  })}
+    `;
+}
 function storageController(storage) {
   function getStorage2(key) {
     const item = storage.getItem(key);
@@ -62,16 +120,6 @@ function storageController(storage) {
 const { getStorage, setStorage } = storageController(localStorage);
 const getHTML$1 = (id) => document.getElementById(id);
 const createElement = (tag) => document.createElement(tag);
-function CategoryIcon(category) {
-  function template() {
-    return `
-        <div class="restaurant__category">
-            <img src="./public/images/category-${category}.png" alt="${category}" class="category-icon">
-        </div>
-        `;
-  }
-  return template();
-}
 function StarButton(isSelected) {
   return `
         <div>
@@ -84,16 +132,38 @@ function StarButton(isSelected) {
         </div>
     `;
 }
-function StoreInfo({ name, distance, description, link, isFavorite }, type = "summary") {
+function CategoryIcon(category) {
   function template() {
     return `
-            ${type === "summary" ? `<div class="restaurant__info">` : `<div class="restaurant__info full">`}
+        <div class="restaurant__category">
+            <img src="./public/images/category-${category}.png" alt="${category}" class="category-icon">
+        </div>
+        `;
+  }
+  return template();
+}
+function StoreInfo({
+  category,
+  name,
+  distance,
+  description,
+  link,
+  isFavorite,
+  type,
+  index
+}) {
+  function template() {
+    return `
+        ${CategoryIcon(category)}
+            ${type === "summary" ? `<div class="restaurant__info">` : `<div class="restaurant__info full" data-index="${index}">`}
             <div class="restaurant__title-box">
               <div class="restaurant__title">
                 <h3 class="restaurant__name text-subtitle">${name}</h3>
                 <span class="restaurant__distance text-body">캠퍼스부터 ${distance}분 내</span>
               </div>
-              ${StarButton(isFavorite)}
+              <div data-action="toggleFavorite" class="star-button-container">
+          ${StarButton(isFavorite)}
+        </div>
             </div>
                
                 <p class="restaurant__description text-body">${description || "-"}</p>
@@ -110,38 +180,51 @@ function LunchItem({ category, name, distance, description, link, isFavorite }, 
   li.setAttribute("data-index", index);
   function render() {
     li.innerHTML = `
-    ${CategoryIcon(category)}
     ${StoreInfo({
+      category,
       name,
       distance,
       description,
       link,
-      isFavorite
+      type: "summary",
+      isFavorite,
+      index
     })}
   `;
     return li;
   }
   return render();
 }
-function LunchList(targetID = "restaurantListSection") {
+function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restaurantFavoriteSection") {
   const lunchItems = getStorage("lunchItems");
-  console.log("lunchItems )))", getStorage("lunchItems"));
-  function template() {
+  function template(items, indexMap) {
     const ul = createElement("ul");
     ul.classList.add("restaurant-list");
-    if (lunchItems.length > 0) {
-      lunchItems.forEach((item, index) => {
-        ul.appendChild(LunchItem(item, String(index)));
+    if (items.length > 0) {
+      items.forEach((item, index) => {
+        const originalIndex = indexMap ? indexMap[index] : index;
+        ul.appendChild(LunchItem(item, String(originalIndex)));
       });
     } else {
       ul.innerHTML = `<p class="empty-message">목록이 없습니다.</p>`;
     }
-    return ul.outerHTML;
+    return ul;
   }
   function render() {
-    console.log("실행됨실행됨");
-    getHTML$1(targetID).innerHTML = "";
-    getHTML$1(targetID).innerHTML = template();
+    const ul = template(lunchItems);
+    getHTML$1(lunchListID).innerHTML = "";
+    getHTML$1(lunchListID).innerHTML = ul.outerHTML;
+  }
+  function renderFavorites() {
+    const favorites = lunchItems.map((item, index) => ({ ...item, originalIndex: index })).filter((item) => item.isFavorite);
+    const items = favorites.map((item) => {
+      const { originalIndex, ...rest } = item;
+      return rest;
+    });
+    const indexMap = favorites.map((item) => item.originalIndex);
+    const ul = template(items, indexMap);
+    getHTML$1(favoriteTargetID).innerHTML = "";
+    getHTML$1(favoriteTargetID).appendChild(ul);
   }
   function addRestaurantItem({
     category,
@@ -165,7 +248,7 @@ function LunchList(targetID = "restaurantListSection") {
   return {
     render,
     addRestaurantItem,
-    template
+    renderFavorites
   };
 }
 function TabMenu() {
@@ -220,6 +303,7 @@ function SubmitEvent(lunchList2) {
     storageLunchItems.splice(lunchItemIndex, 1);
     setStorage("lunchItems", storageLunchItems);
     LunchList().render();
+    LunchList().renderFavorites();
     closeModal();
   }
   function closeModal() {
@@ -239,12 +323,14 @@ function SubmitEvent(lunchList2) {
     form.reset();
   }
 }
-RestaurantTabMenu("restaurantMenuSection");
-const lunchList = LunchList("restaurantListSection");
+RestaurantTabMenu("restaurantTabMenuBox");
+const filterBox = FilterBox();
+console.log(filterBox);
+document.getElementById("restaurantFilterBox").innerHTML = filterBox;
+const lunchList = LunchList("restaurantListBox", "restaurantFavoriteSection");
 lunchList.render();
+lunchList.renderFavorites();
 SubmitEvent(lunchList);
-const lunchFavoriteList = LunchList("restaurantFavoriteSection");
-lunchFavoriteList.render();
 function Button({ id, type, content, dataSet, styleType, buttonValue }) {
   const classList = styleType === "primary" ? "button button--primary text-caption" : "button button--secondary text-caption";
   function template() {
@@ -318,43 +404,6 @@ function InputBox({
           <input type="${type}" name="${name}" id="${id}"  ${required ? "required" : ""} maxlength= "${maxLength}" placeholder= "${placeHolder}">
           ${helpCaption && `<span class="help-text text-caption">${helpCaption}</span>` || ""}
     </div>
-    `;
-  }
-  return template();
-}
-const SELECT_OPTIONS = {
-  distance: [
-    { value: "", label: "선택해 주세요" },
-    { value: "5", label: "5분 내" },
-    { value: "10", label: "10분 내" },
-    { value: "15", label: "15분 내" },
-    { value: "20", label: "20분 내" },
-    { value: "30", label: "30분 내" }
-  ],
-  category: [
-    { value: "", label: "선택해 주세요" },
-    { value: "korean", label: "한식" },
-    { value: "chinese", label: "중식" },
-    { value: "japanese", label: "일식" },
-    { value: "western", label: "양식" },
-    { value: "asian", label: "아시안" },
-    { value: "etc", label: "기타" }
-  ]
-};
-function SelectBox({ id, name, label, optionName, required }) {
-  const options = SELECT_OPTIONS[optionName] || [];
-  function template() {
-    return `
-      <div class="form-item ${"form-item--required"}">
-        <label for="${id}" class="text-caption">${label}</label>
-        <select name="${name}" id="${id}" ${"required"}>
-          ${options.map(
-      (option) => `
-                <option value="${option.value}">${option.label}</option>
-              `
-    ).join("")}
-        </select>
-      </div>
     `;
   }
   return template();
@@ -444,7 +493,7 @@ function StoreDeleteForm(lunchItemIndex) {
   function template() {
     return `
         <form id="storeDeleteForm" class="modal-form">
-          ${StoreInfo(lunchItem, "full")}
+          ${StoreInfo({ ...lunchItem, type: "full", index: lunchItemIndex })}
           ${FormButtons("storeDelete", lunchItemIndex)}
         </form>
     `;
@@ -452,19 +501,30 @@ function StoreDeleteForm(lunchItemIndex) {
   return template();
 }
 function openModal(formName, target) {
-  const modalHTML = `<div class="modal modal--open">
-    <div class="modal-container">
-      ${formName === "storeAdd" && StoreAddForm({
-    id: "restaurantForm",
-    label: "새로운 음식점"
-  }) || ""}
-
-      ${formName === "storeDelete" && StoreDeleteForm(Number(target.dataset.index)) || ""}
-    </div>
-  </div>`;
-  getHTML$1("modalLayout").innerHTML = "";
-  getHTML$1("modalLayout").innerHTML = modalHTML;
   getHTML$1("modalBackground").classList.add("show");
+  function template() {
+    const templates = {
+      storeAdd: () => StoreAddForm({
+        id: "restaurantForm",
+        label: "새로운 음식점"
+      }),
+      storeDelete: () => StoreDeleteForm(Number(target == null ? void 0 : target.dataset.index))
+    };
+    const modalHTML = `
+    <div class="modal modal--open">
+      <div class="modal-container">
+        ${templates[formName] ? templates[formName]() : ""}
+      </div>
+    </div>`;
+    return modalHTML;
+  }
+  function render() {
+    const modalHTML = template();
+    getHTML$1("modalLayout").innerHTML = "";
+    getHTML$1("modalLayout").innerHTML = modalHTML;
+  }
+  render();
+  return { render };
 }
 class ClickEvent {
   constructor(elem) {
@@ -496,21 +556,26 @@ class ClickEvent {
   showStoreDeleteModal(target) {
     openModal("storeDelete", target);
   }
-  // deleteStore(target) {
-  //   const storageLunchItem = getStorage("lunchItems");
-  //   // console.log("target => ", target);
-  //   // console.log("타겟의 엘리먼트 li 확인", target.closest("li"));
-  //   // const lunchItemIndex = Number(target.closest("li").dataset.value);
-  //   storageLunchItem.splice(lunchItemIndex, 1);
-  //   setStorage("lunchItems", storageLunchItem);
-  //   document.getElementById("modalBackground")?.classList.remove("show");
-  // }
   removeModal(element) {
     var _a;
     if (element.id === "closeModalBtn") {
       (_a = document.getElementById("modalBackground")) == null ? void 0 : _a.classList.remove("show");
       return;
     }
+  }
+  toggleFavorite(target) {
+    const indexElement = target.closest("[data-index]");
+    if (!indexElement) return;
+    const index = indexElement.getAttribute("data-index");
+    if (!index) return;
+    indexElement.getAttribute("data-favorite") === "true";
+    const storageLunchItems = getStorage("lunchItems");
+    storageLunchItems[index].isFavorite = !storageLunchItems[index].isFavorite;
+    setStorage("lunchItems", storageLunchItems);
+    LunchList().render();
+    LunchList().renderFavorites();
+    const isModal = target.closest("#storeDeleteForm");
+    if (isModal) openModal("storeDelete", indexElement).render();
   }
   onClick(event) {
     let target = event.target.closest("[data-action]");
