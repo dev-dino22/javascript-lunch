@@ -658,10 +658,8 @@ class ClickEvent {
     if (!indexElement) return;
     const index = indexElement.getAttribute("data-index");
     if (!index) return;
-    console.log("index=>", index);
     indexElement.getAttribute("data-favorite") === "true";
     const storageLunchItems = getStorage("lunchItems");
-    console.log("storageLunchItems => ", storageLunchItems);
     storageLunchItems[index].isFavorite = !storageLunchItems[index].isFavorite;
     setStorage("lunchItems", storageLunchItems);
     LunchList().render();
