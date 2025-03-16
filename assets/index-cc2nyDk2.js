@@ -61,13 +61,13 @@ const SELECT_OPTIONS = {
 SELECT_OPTIONS.sortCategory = SELECT_OPTIONS.category.map(
   (option, index) => index === 0 ? { ...option, label: "전체" } : option
 );
-function SelectBox({ id, name, label, optionName, required }) {
+function SelectBox({ id, name, label, optionName, required, onChange }) {
   const options = SELECT_OPTIONS[optionName] || [];
   function template() {
     return `
       <div class="form-item ${required ? "form-item--required" : ""}">
         ${label ? `<label for="${id}" class="text-caption">${label}</label>` : ""}
-        <select name="${name}" id="${id}" ${required ? "required" : ""}>
+        <select name="${name}" id="${id}" ${required ? "required" : ""} ${onChange ? `data-action="${onChange}"` : ""}>
           ${options.map(
       (option) => `
                 <option value="${option.value}">${option.label}</option>
@@ -84,14 +84,41 @@ function FilterBox() {
         ${SelectBox({
     id: "cartegoryFilter",
     name: "cartegoryFilter",
-    optionName: "sortCategory"
+    optionName: "sortCategory",
+    onChange: "categoryFilter-change"
   })}
         ${SelectBox({
     id: "sortFilter",
     name: "sortFilter",
-    optionName: "sortOption"
+    optionName: "sortOption",
+    onChange: "sortFilter-change"
   })}
     `;
+}
+let filterState = {
+  category: "",
+  sortOption: "name"
+};
+function updateFilterState(newState) {
+  filterState = {
+    ...filterState,
+    ...newState
+  };
+}
+function sortFilter(items) {
+  let filtered = [...items];
+  if (filterState.category) {
+    filtered = filtered.filter(
+      (item) => item.category === filterState.category
+    );
+  }
+  if (filterState.sortOption === "name") {
+    filtered.sort((a, b) => a.name.localeCompare(b.name));
+  }
+  if (filterState.sortOption === "distance") {
+    filtered.sort((a, b) => Number(a.distance) - Number(b.distance));
+  }
+  return filtered;
 }
 function storageController(storage) {
   function getStorage2(key) {
@@ -167,7 +194,7 @@ function StoreInfo({
             </div>
                
                 <p class="restaurant__description text-body">${description || "-"}</p>
-                ${link ? `<a href="${link}" target="_blank" class="restaurant__link">${link}</a>` : ""}
+                ${link && type === "full" ? `<a href="${link}" target="_blank" class="restaurant__link">${link}</a>` : ""}
             </div>
     `;
   }
@@ -197,6 +224,10 @@ function LunchItem({ category, name, distance, description, link, isFavorite }, 
 }
 function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restaurantFavoriteSection") {
   const lunchItems = getStorage("lunchItems");
+  function updateFilter(newState) {
+    updateFilterState(newState);
+    render();
+  }
   function template(items, indexMap) {
     const ul = createElement("ul");
     ul.classList.add("restaurant-list");
@@ -206,12 +237,47 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
         ul.appendChild(LunchItem(item, String(originalIndex)));
       });
     } else {
-      ul.innerHTML = `<p class="empty-message">목록이 없습니다.</p>`;
+      ul.innerHTML = `
+      <div class="empty-info-container">
+      <div class="empty-info-box">
+        <div class="empty-icon">
+        <?xml version="1.0" encoding="UTF-8"?>
+          <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="Capa_1" x="0px" y="0px" viewBox="0 0 511.941 511.941" style="enable-background:new 0 0 511.941 511.941;" xml:space="preserve">
+          <g>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M123.181,170.091c28.17-43.47,77.12-72.24,132.79-72.24c87.34,0,158.12,70.797,158.12,158.12v126"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M97.851,381.971v-126c0-19.18,3.41-37.56,9.67-54.57"/>
+            
+              <circle style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" cx="255.971" cy="323.493" r="15.059"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M255.971,278.317L255.971,278.317c-8.573,0-15.775-6.446-16.722-14.967l-10.07-90.629c-1.774-15.968,10.725-29.933,26.792-29.933h0&#10;&#9;&#9;c16.066,0,28.566,13.965,26.792,29.933l-10.07,90.629C271.746,271.871,264.544,278.317,255.971,278.317z"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M255.971,67.736L255.971,67.736c-8.317,0-15.059-6.742-15.059-15.059V22.559c0-8.317,6.742-15.059,15.059-15.059h0&#10;&#9;&#9;c8.317,0,15.059,6.742,15.059,15.059v30.118C271.029,60.994,264.287,67.736,255.971,67.736z"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M122.868,122.868L122.868,122.868c-5.881,5.881-15.416,5.881-21.296,0L58.979,80.276c-5.881-5.881-5.881-15.416,0-21.296l0,0&#10;&#9;&#9;c5.881-5.881,15.416-5.881,21.296,0l42.593,42.593C128.749,107.453,128.749,116.988,122.868,122.868z"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M389.073,122.868L389.073,122.868c5.881,5.881,15.416,5.881,21.296,0l42.593-42.593c5.881-5.881,5.881-15.416,0-21.296v0&#10;&#9;&#9;c-5.881-5.881-15.416-5.881-21.296,0l-42.593,42.593C383.192,107.453,383.192,116.988,389.073,122.868z"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M67.735,255.971L67.735,255.971c0,8.317-6.742,15.059-15.059,15.059H22.559c-8.317,0-15.059-6.742-15.059-15.059v0&#10;&#9;&#9;c0-8.317,6.742-15.059,15.059-15.059h30.118C60.993,240.912,67.735,247.654,67.735,255.971z"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M96.481,504.441h-13.86c-24.86,0-45-20.15-45-45v-30.47c0-24.85,20.14-45,45-45h223.86"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M341.481,383.971h87.84c24.86,0,45,20.15,45,45v30.47c0,24.85-20.14,45-45,45h-297.84"/>
+            <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;M489.382,271.03h-30.118c-8.317,0-15.059-6.742-15.059-15.059v0c0-8.317,6.742-15.059,15.059-15.059h30.118&#10;&#9;&#9;c8.317,0,15.059,6.742,15.059,15.059v0C504.441,264.288,497.699,271.03,489.382,271.03z"/>
+            <g>
+              
+                <line style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" x1="190.471" y1="422.859" x2="190.471" y2="434.859"/>
+              <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;" d="&#10;&#9;&#9;&#9;M310.072,434.524c0-7.68,6.226-13.906,13.906-13.906c7.68,0,13.906,6.226,13.906,13.906"/>
+              <g>
+                <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-miterlimit:10;" d="M256.066,442.742&#10;&#9;&#9;&#9;&#9;c0,7.984-6.472,14.456-14.456,14.456c-7.984,0-14.456-6.472-14.456-14.456"/>
+                <path style="fill:none;stroke:#000000;stroke-width:15;stroke-linecap:round;stroke-miterlimit:10;" d="M284.977,442.742&#10;&#9;&#9;&#9;&#9;c0,7.984-6.472,14.456-14.456,14.456s-14.456-6.472-14.456-14.456"/>
+              </g>
+            </g>
+          </g>
+          </svg>
+          </div>
+        <p class="empty-message">음식점을 등록해주세요</p>
+      </div>
+      </div>
+      `;
     }
     return ul;
   }
   function render() {
-    const ul = template(lunchItems);
+    const filteredItems = sortFilter(lunchItems);
+    const ul = template(filteredItems);
     getHTML$1(lunchListID).innerHTML = "";
     getHTML$1(lunchListID).innerHTML = ul.outerHTML;
   }
@@ -248,7 +314,8 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
   return {
     render,
     addRestaurantItem,
-    renderFavorites
+    renderFavorites,
+    updateFilter
   };
 }
 function TabMenu() {
@@ -275,6 +342,26 @@ function RestaurantTabMenu(targetID) {
         `;
   }
   return render();
+}
+function ChangeEvent(lunchList2) {
+  document.removeEventListener("change", onChange);
+  document.addEventListener("change", onChange.bind(this));
+  function onChange(event) {
+    const target = event.target;
+    if (!target) return;
+    const action = target.dataset.action;
+    if (!action) return;
+    switch (action) {
+      case "categoryFilter-change":
+        lunchList2.updateFilter({ category: target.value });
+        break;
+      case "sortFilter-change":
+        lunchList2.updateFilter({ sortOption: target.value });
+        break;
+      default:
+        console.warn(`Unknown action: ${action}`);
+    }
+  }
 }
 const getHTML = (id) => document.getElementById(id);
 function SubmitEvent(lunchList2) {
@@ -325,11 +412,11 @@ function SubmitEvent(lunchList2) {
 }
 RestaurantTabMenu("restaurantTabMenuBox");
 const filterBox = FilterBox();
-console.log(filterBox);
 document.getElementById("restaurantFilterBox").innerHTML = filterBox;
 const lunchList = LunchList("restaurantListBox", "restaurantFavoriteSection");
 lunchList.render();
 lunchList.renderFavorites();
+ChangeEvent(lunchList);
 SubmitEvent(lunchList);
 function Button({ id, type, content, dataSet, styleType, buttonValue }) {
   const classList = styleType === "primary" ? "button button--primary text-caption" : "button button--secondary text-caption";
