@@ -164,7 +164,7 @@ function CategoryIcon(category) {
   function template() {
     return `
         <div class="restaurant__category">
-            <img src="./public/images/category-${category}.png" alt="${category}" class="category-icon">
+            <img src="./images/category-${category}.png" alt="${category}" class="category-icon">
         </div>
         `;
   }
