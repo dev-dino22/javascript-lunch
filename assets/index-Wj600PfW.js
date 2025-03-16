@@ -126,7 +126,7 @@ function storageController(storage) {
     if (item) {
       return JSON.parse(item);
     }
-    return null;
+    return [];
   }
   function setStorage2(key, value) {
     storage.setItem(key, JSON.stringify(value));
@@ -223,7 +223,7 @@ function LunchItem({ category, name, distance, description, link, isFavorite }, 
   return render();
 }
 function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restaurantFavoriteSection") {
-  const lunchItems = getStorage("lunchItems");
+  const lunchItems = getStorage("lunchItems") ?? [];
   function updateFilter(newState) {
     updateFilterState(newState);
     render();
@@ -276,7 +276,7 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
     return ul;
   }
   function render() {
-    const filteredItems = sortFilter(lunchItems);
+    const filteredItems = sortFilter(lunchItems ?? []);
     const ul = template(filteredItems);
     getHTML$1(lunchListID).innerHTML = "";
     getHTML$1(lunchListID).innerHTML = ul.outerHTML;
