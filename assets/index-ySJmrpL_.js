@@ -107,10 +107,10 @@ function updateFilterState(newState) {
 }
 function sortFilter(items) {
   if (!Array.isArray(items)) return items;
-  let filtered = items.map((item, index) => ({
-    ...item,
-    dataIndex: index
+  let filtered = items.map((item) => ({
+    ...item
   }));
+  console.log("filtered!!!!", filtered);
   if (filterState.category) {
     filtered = filtered.filter(
       (item) => item.category === filterState.category
@@ -180,13 +180,12 @@ function StoreInfo({
   description,
   link,
   isFavorite,
-  type,
-  index
+  type
 }) {
   function template() {
     return `
         ${CategoryIcon(category)}
-            ${type === "summary" ? `<div class="restaurant__info">` : `<div class="restaurant__info full" data-index="${index}">`}
+            ${type === "summary" ? `<div class="restaurant__info">` : `<div class="restaurant__info full">`}
             <div class="restaurant__title-box">
               <div class="restaurant__title">
                 <h3 class="restaurant__name text-subtitle">${name}</h3>
@@ -204,11 +203,19 @@ function StoreInfo({
   }
   return template();
 }
-function LunchItem({ category, name, distance, description, link, isFavorite }, index) {
+function LunchItem({
+  id,
+  category,
+  name,
+  distance,
+  description,
+  link,
+  isFavorite
+}) {
   const li = createElement("li");
   li.classList.add("restaurant");
   li.setAttribute("data-action", "showStoreDeleteModal");
-  li.setAttribute("data-index", index);
+  li.setAttribute("data-id", id);
   function render() {
     li.innerHTML = `
     ${StoreInfo({
@@ -218,8 +225,7 @@ function LunchItem({ category, name, distance, description, link, isFavorite }, 
       description,
       link,
       type: "summary",
-      isFavorite,
-      index
+      isFavorite
     })}
   `;
     return li;
@@ -227,18 +233,20 @@ function LunchItem({ category, name, distance, description, link, isFavorite }, 
   return render();
 }
 function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restaurantFavoriteSection") {
-  const lunchItems = getStorage("lunchItems") ?? [];
+  let lunchItems = getStorage("lunchItems") ?? [];
   function updateFilter(newState) {
     updateFilterState(newState);
     render();
+  }
+  function reloadLunchItems() {
+    lunchItems = getStorage("lunchItems") ?? [];
   }
   function template(items) {
     const ul = createElement("ul");
     ul.classList.add("restaurant-list");
     if (items.length > 0) {
       items.forEach((item) => {
-        const dataIndex = item.dataIndex ?? 0;
-        ul.appendChild(LunchItem(item, String(dataIndex)));
+        ul.appendChild(LunchItem(item));
       });
     } else {
       ul.innerHTML = `
@@ -280,22 +288,21 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
     return ul;
   }
   function render() {
+    reloadLunchItems();
     const filteredItems = sortFilter(lunchItems ?? []);
     const ul = template(filteredItems);
     getHTML$1(lunchListID).innerHTML = "";
     getHTML$1(lunchListID).innerHTML = ul.outerHTML;
   }
   function renderFavorites() {
-    const favorites = lunchItems.map((item, index) => ({ ...item, dataIndex: index })).filter((item) => item.isFavorite);
-    const items = favorites.map((item) => {
-      const { dataIndex, ...rest } = item;
-      return rest;
-    });
-    const ul = template(items);
+    reloadLunchItems();
+    const favorites = lunchItems.map((item) => ({ ...item })).filter((item) => item.isFavorite);
+    const ul = template(favorites);
     getHTML$1(favoriteTargetID).innerHTML = "";
     getHTML$1(favoriteTargetID).appendChild(ul);
   }
   function addRestaurantItem({
+    id,
     category,
     name,
     distance,
@@ -303,6 +310,7 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
     link
   }) {
     const newItem = {
+      id,
       category,
       name,
       distance,
@@ -359,7 +367,9 @@ function ChangeEvent(lunchList2) {
         lunchList2.updateFilter({ category: target.value });
         break;
       case "sortFilter-change":
-        lunchList2.updateFilter({ sortOption: target.value });
+        lunchList2.updateFilter({
+          sortOption: target.value
+        });
         break;
       default:
         console.warn(`Unknown action: ${action}`);
@@ -377,7 +387,9 @@ function SubmitEvent(lunchList2) {
     const distance = formData.get("distance");
     const description = formData.get("description");
     const link = formData.get("link");
+    const id = crypto.randomUUID();
     lunchList2.addRestaurantItem({
+      id,
       category,
       name,
       distance,
@@ -387,28 +399,35 @@ function SubmitEvent(lunchList2) {
     closeModal();
   }
   function deleteStore(event, form) {
-    var _a;
-    const lunchItemIndex = (_a = event.submitter) == null ? void 0 : _a.value;
+    const dataID = form.dataset.id;
+    console.log("dataID", dataID);
+    if (!dataID) return;
     const storageLunchItems = getStorage("lunchItems");
-    storageLunchItems.splice(lunchItemIndex, 1);
-    setStorage("lunchItems", storageLunchItems);
+    const newStorageLunchItems = storageLunchItems.filter(
+      (item) => item.id !== dataID
+    );
+    console.log("newStorageLunchItems", newStorageLunchItems);
+    setStorage("lunchItems", newStorageLunchItems);
     LunchList().render();
     LunchList().renderFavorites();
     closeModal();
   }
   function closeModal() {
     const modalBackground = getHTML("modalBackground");
-    modalBackground.classList.remove("show");
+    if (modalBackground) {
+      modalBackground.classList.remove("show");
+    }
   }
   function onSubmit(event) {
     event.preventDefault();
-    const form = event.target.closest(".modal-form");
+    const form = event.target;
+    console.log("form??", form);
     if (!form) return;
     if (form.id === "restaurantForm") {
       handleRestaurantSubmit(event, form);
     }
     if (form.id === "storeDeleteForm") {
-      deleteStore(event);
+      deleteStore(event, form);
     }
     form.reset();
   }
@@ -439,7 +458,7 @@ function Button({ id, type, content, dataSet, styleType, buttonValue }) {
   }
   return template();
 }
-function FormButtons(formName, buttonValue) {
+function FormButtons(formName) {
   const storeAddBtns = `${Button({
     id: "closeModalBtn",
     type: "button",
@@ -456,8 +475,7 @@ function FormButtons(formName, buttonValue) {
     id: "storeDeleteBtn",
     type: "submit",
     content: "삭제하기",
-    dataSet: "deleteStore",
-    buttonValue
+    dataSet: "deleteStore"
   })}
 
   ${Button({
@@ -578,13 +596,13 @@ const storeAddTemplate = `
   helpCaption: "매장 정보를 확인할 수 있는 링크를 입력해 주세요."
 })}
 `;
-function StoreDeleteForm(lunchItemIndex) {
-  const lunchItem = getStorage("lunchItems")[lunchItemIndex];
+function StoreDeleteForm(dataID) {
+  const lunchItem = getStorage("lunchItems").find(({ id }) => id === dataID);
   function template() {
     return `
-        <form id="storeDeleteForm" class="modal-form">
-          ${StoreInfo({ ...lunchItem, type: "full", index: lunchItemIndex })}
-          ${FormButtons("storeDelete", lunchItemIndex)}
+        <form id="storeDeleteForm" class="modal-form" data-id="${dataID}">
+          ${StoreInfo({ ...lunchItem, type: "full" })}
+          ${FormButtons("storeDelete")}
         </form>
     `;
   }
@@ -598,7 +616,7 @@ function openModal(formName, target) {
         id: "restaurantForm",
         label: "새로운 음식점"
       }),
-      storeDelete: () => StoreDeleteForm(Number(target == null ? void 0 : target.dataset.index))
+      storeDelete: () => StoreDeleteForm(target.dataset.id)
     };
     const modalHTML = `
     <div class="modal modal--open">
@@ -622,6 +640,12 @@ class ClickEvent {
   }
   reload() {
     location.reload();
+  }
+  resetStorage() {
+    if (confirm("저장소를 초기화하시겠습니까?(되돌리기 불가)")) {
+      this.reload();
+      setStorage("lunchItems", []);
+    }
   }
   selectTab(target) {
     const tabs = document.querySelectorAll(".tab-item");
@@ -654,18 +678,18 @@ class ClickEvent {
     }
   }
   toggleFavorite(target) {
-    const indexElement = target.closest("[data-index]");
-    if (!indexElement) return;
-    const index = indexElement.getAttribute("data-index");
-    if (!index) return;
-    indexElement.getAttribute("data-favorite") === "true";
+    const dataElement = target.closest("[data-id]");
+    if (!dataElement) return;
+    const dataID = dataElement.dataset.id;
+    if (!dataID) return;
     const storageLunchItems = getStorage("lunchItems");
-    storageLunchItems[index].isFavorite = !storageLunchItems[index].isFavorite;
+    const targetData = storageLunchItems.find((item) => item.id === dataID);
+    targetData.isFavorite = !targetData.isFavorite;
     setStorage("lunchItems", storageLunchItems);
     LunchList().render();
     LunchList().renderFavorites();
     const isModal = target.closest("#storeDeleteForm");
-    if (isModal) openModal("storeDelete", indexElement).render();
+    if (isModal) openModal("storeDelete", dataElement).render();
   }
   onClick(event) {
     let target = event.target.closest("[data-action]");
