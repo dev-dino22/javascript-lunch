@@ -251,6 +251,9 @@ function LunchList(lunchListID = "restaurantListBox", favoriteTargetID = "restau
     } else {
       ul.innerHTML = `
       <div class="empty-info-container">
+      <div class="set-default-state-btn" data-action="setDefaultState">
+        <svg id="Layer_1" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg" data-name="Layer 1"><rect fill="#f0873c" height="470" rx="73.436" width="469.999" x="21" y="21"/><g fill-rule="evenodd"><path d="m94.437 21h323.126c40.39 0 73.436 33.046 73.436 73.436v323.128c0 16.799-5.721 32.325-15.305 44.734-12.409 9.584-27.935 15.305-44.734 15.305h-334.562c-34.148 0-62-27.852-62-62v-334.564c0-16.799 5.721-32.325 15.305-44.734 12.409-9.584 27.935-15.305 44.734-15.305z" fill="#ff954a"/><path d="m320.607 375.816h-163.281c-6.917 0-12.517 5.6-12.517 12.517s5.6 12.517 12.517 12.517h163.282c6.917 0 12.517-5.6 12.517-12.517s-5.6-12.517-12.517-12.517zm-153.776-107.145c-4.282-5.411-3.388-13.269 2.023-17.551s13.269-3.388 17.552 2.023l40.044 50.49v-160.176c0-6.917 5.6-12.47 12.517-12.47s12.517 5.552 12.517 12.47v160.176l40.044-50.49c4.282-5.411 12.14-6.305 17.552-2.023s6.353 12.14 2.023 17.551l-62.348 78.582c-2.353 3.011-5.976 4.753-9.788 4.753s-7.435-1.741-9.787-4.753l-62.348-78.582z" fill="#ed7c2b"/><path d="m337.623 365.921h-163.281c-6.917 0-12.517 5.6-12.517 12.517s5.6 12.517 12.517 12.517h163.281c6.917 0 12.517-5.6 12.517-12.517s-5.6-12.517-12.517-12.517zm-153.776-107.145c-4.282-5.411-3.388-13.27 2.023-17.551 5.411-4.282 13.269-3.388 17.551 2.023l40.044 50.49v-160.175c0-6.917 5.6-12.47 12.517-12.47s12.517 5.552 12.517 12.47v160.176l40.044-50.49c4.282-5.411 12.14-6.305 17.552-2.023 5.411 4.282 6.352 12.14 2.023 17.551l-62.348 78.582c-2.353 3.012-5.976 4.753-9.788 4.753s-7.435-1.741-9.787-4.753l-62.348-78.582z" fill="#fff"/></g></svg>
+      </div>
       <div class="empty-info-box">
         <div class="empty-icon">
         <?xml version="1.0" encoding="UTF-8"?>
@@ -634,6 +637,56 @@ function openModal(formName, target) {
   render();
   return { render };
 }
+const LunchListData = [
+  {
+    id: crypto.randomUUID(),
+    category: "korean",
+    name: "피양콩할머니",
+    distance: 10,
+    description: "2005년 장모님에게 전수받은 설렁탕 조리법을 개선하여 시작했다는 외고집의 설렁탕 맛집입니다. 진하고 깊은 국물 맛과 부드러운 고기가 특징이며, 다양한 밑반찬도 깔끔하게 나옵니다. 특히 깍두기와 배추김치가 잘 어우러져 국물의 감칠맛을 더해줍니다.",
+    isFavorite: true
+  },
+  {
+    id: crypto.randomUUID(),
+    category: "chinese",
+    name: "친친",
+    distance: 10,
+    description: "Since 2004 편리한 교통과 주차, 그리고 관록만큼 깊은 맛과 정성으로 정통 중식 요리를 선보이는 곳입니다. 대표 메뉴로는 짜장면, 탕수육, 깐풍기가 있으며, 신선한 재료와 풍부한 맛이 특징입니다. 내부 인테리어가 깔끔하고 분위기가 좋아 가족 모임이나 회식 장소로 인기가 많습니다.",
+    isFavorite: false
+  },
+  {
+    id: crypto.randomUUID(),
+    category: "japanese",
+    name: "스시 오마카세",
+    distance: 8,
+    description: "정통 일본식 스시 오마카세 전문점으로, 숙련된 셰프가 신선한 재료를 사용해 손님 눈앞에서 바로 스시를 준비해 줍니다. 회전율이 빠르고, 고급스러운 분위기에서 제철 재료로 만든 다양한 스시를 즐길 수 있습니다. 예약이 필수이며, 가격대는 높은 편이지만 만족도가 매우 높습니다.",
+    isFavorite: true
+  },
+  {
+    id: crypto.randomUUID(),
+    category: "western",
+    name: "버거 플래닛",
+    distance: 5,
+    description: "수제 버거 전문점으로, 신선한 재료와 두툼한 패티가 특징입니다. 다양한 토핑 옵션과 사이드 메뉴가 준비되어 있으며, 프라이드 포테이토와 밀크쉐이크도 인기가 많습니다. 매장은 깔끔하고 캐주얼한 분위기로, 친구들과의 모임이나 간단한 식사에 적합합니다.",
+    isFavorite: false
+  },
+  {
+    id: crypto.randomUUID(),
+    category: "western",
+    name: "라 파스타",
+    distance: 12,
+    description: "이탈리아 전통 방식의 파스타와 피자를 선보이는 레스토랑입니다. 신선한 재료와 자체 제작한 소스를 사용해 깊은 풍미를 자랑합니다. 대표 메뉴로는 까르보나라, 봉골레 파스타, 마르게리타 피자가 있으며, 와인 리스트도 잘 갖춰져 있습니다. 분위기가 로맨틱해 데이트 장소로 인기가 많습니다.",
+    isFavorite: true
+  },
+  {
+    id: crypto.randomUUID(),
+    category: "korean",
+    name: "명동 칼국수",
+    distance: 6,
+    description: "칼국수 전문점으로, 진한 멸치 육수와 쫄깃한 면발이 특징입니다. 김치가 칼국수와 잘 어울리며, 추가로 왕만두를 함께 주문하면 더욱 든든한 한 끼가 됩니다. 가격이 합리적이며, 빠른 회전율 덕분에 대기 시간이 짧은 편입니다.",
+    isFavorite: false
+  }
+];
 class ClickEvent {
   constructor(elem) {
     elem.addEventListener("click", this.onClick.bind(this));
@@ -645,6 +698,12 @@ class ClickEvent {
     if (confirm("저장소를 초기화하시겠습니까?(되돌리기 불가)")) {
       this.reload();
       setStorage("lunchItems", []);
+    }
+  }
+  setDefaultState() {
+    if (confirm("기본 식당 데이터를 불러오시겠습니까?")) {
+      setStorage("lunchItems", LunchListData);
+      this.reload();
     }
   }
   selectTab(target) {
